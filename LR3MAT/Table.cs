@@ -1,4 +1,5 @@
 ﻿using ConsoleTables;
+using System.Diagnostics.Metrics;
 namespace LR1MAT
 {
     struct Support
@@ -112,6 +113,12 @@ namespace LR1MAT
         {
             int y = 0;
             double mini = double.MaxValue;
+            int counter = 0;
+            for (int i = 0; i < basic_variables; i++)
+            {
+                if (simplex_table[i, x] < 0) counter++;
+            }
+            if (counter == basic_variables) { return 2; }
             for (int i = 0; i < basic_variables; i++)
             {
                 double relation = simplex_table[i, 0] / simplex_table[i, x];
@@ -165,20 +172,19 @@ namespace LR1MAT
                 for (int i = 1; i < free_variables + 1; i++) if (simplex_table[Flag1.index, i] < 0)
                     {
                         if (_count == 0) x = i;
-                        ++_count;
                     }
-                if (_count + 1 == simplex_table.GetLength(1))
-                {
-                    return 1;
-                }
-                if (iter(x) == 1) { return 2; }
+                int Error = iter(x);
+                if (Error == 1) { return 1; }
+                else if (Error == 2) { return 2; }
                 print();
                 Flag1 = Negative_in_free_members_column();
             }
             Support Flag2 = Positive_in_last_row();
             while (Flag2.Switch)
             {
-                if (iter(Flag2.index) == 1) { return 2; }
+                int Error = iter(Flag2.index);
+                if (Error == 1) { return 1; }
+                else if (Error == 2) { return 2; }
                 print();
                 Flag2 = Positive_in_last_row();
             }
@@ -188,9 +194,9 @@ namespace LR1MAT
                 if (1 <= number && number <= c.Length)
                     end_args[number - 1] = this.simplex_table[i, 0];
             }
-            for(int i = 0; i < end_args.Length; ++i) 
+            for (int i = 0; i < end_args.Length; ++i)
             {
-                Console.Write($"X{i+1} = {end_args[i]:F2}\t");
+                Console.Write($"X{i + 1} = {end_args[i]:F2}\t");
             }
 
             end_print(this.simplex_table[basic_variables, 0]);

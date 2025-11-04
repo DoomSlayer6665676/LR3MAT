@@ -8,9 +8,10 @@ using System.Threading.Tasks;
 namespace LR3MAT
 {
     struct Solution {  public int x; public bool flag; public Solution(int x, bool flag) { this.x = x; this.flag = flag; } }
-    public struct Sup { public bool flag; public string[] column; public string[] row; public double F; public Sup() { this.flag = false; } }
+    public struct Sup { public bool flag; public string[] column; public string[] row; public double F; public TreeNode branch; public Sup() { this.flag = false; } }
     public class Branches_and_borders : Table
     {
+        TreeNode branch;
         static double[,] reverse(double[,] Table, int str)
         {
             double[,] _Table = (double[,])Table.Clone();
@@ -24,6 +25,7 @@ namespace LR3MAT
         }
         public Branches_and_borders(double[] c, double[,] A, double[] b, Sup branch) : base(c, A, b) 
         {
+            this.branch = new TreeNode("Дерево решений");
             if (branch.flag) 
             {
                 for (int i = 0; i < branch.column.Length-1; i++)
@@ -35,24 +37,37 @@ namespace LR3MAT
                     this.row[i] = branch.row[i];
                 }
                 this.simplex_table[this.simplex_table.GetLength(0)-1, 0] = branch.F;
+                this.branch = branch.branch;
             }
         }
         public void simplex_metod()
         {
             int Flag0 = base.simplex_metod();
+            string str = "";
+            for (int i = 0; i < end_args.Length; ++i)
+            {
+                str += $"X{i + 1} = {end_args[i]:F2} ";
+            }
+            str += $"F = {-this.simplex_table[this.simplex_table.GetLength(0) - 1, 0]:F2}";
+            TreeNode branch_new = new TreeNode(str);
             if (Flag0 != 0)
             {
+                TreeNode branch_new_instruction = new TreeNode($"Задача не решается {Flag0} - Конец ветви");
                 Console.WriteLine($"Задача не решается {Flag0}\nКонец ветви");
+                branch_new.AddChild(branch_new_instruction);
             }
             else
             {
                 Solution flag1 = is_int(this.end_args);
                 if (flag1.flag)
                 {
+                    TreeNode branch_new_instruction = new TreeNode("Найдено целое решение - Конец ветви");
                     Console.WriteLine("Найдено целое решение\nКонец ветви");
+                    branch_new.AddChild(branch_new_instruction);
                 }
                 else
                 {
+                    TreeNode branch_new_instruction = new TreeNode($"Решение не является целым, {this.column[flag1.x]} дробное");
                     Console.WriteLine($"Решение не является целым, {this.column[flag1.x]} дробное");
                     double[] new_b = new double[this.b.Length + 1];
                     for (int i = 0; i < this.b.Length; i++) new_b[i] = this.simplex_table[i, 0];
@@ -71,17 +86,34 @@ namespace LR3MAT
                     double[] new_c = new double[this.c.Length];
                     for (int i = 0; i < this.c.Length; ++i) new_c[i] = this.simplex_table[this.simplex_table.GetLength(0)-1, i + 1];
                     new_b[this.b.Length] = Math.Floor(this.simplex_table[flag1.x, 0]) - this.simplex_table[flag1.x, 0];
+                    TreeNode branch_new_branch = new TreeNode($"Ветвь {this.column[flag1.x]} <= {Math.Floor(this.simplex_table[flag1.x, 0])}");
                     Console.WriteLine($"Ветвь {this.column[flag1.x]} <= {Math.Floor(this.simplex_table[flag1.x, 0])}");
                     Sup branch_args = new();
-                    branch_args.flag = true; branch_args.column = this.column; branch_args.row = this.row; branch_args.F = this.simplex_table[this.simplex_table.GetLength(0)-1, 0];
+                    branch_args.flag = true;
+                    branch_args.column = this.column;
+                    branch_args.row = this.row;
+                    branch_args.F = this.simplex_table[this.simplex_table.GetLength(0)-1, 0];
+                    branch_args.branch = branch_new_branch;
                     Branches_and_borders branch1 = new Branches_and_borders(new_c, reverse(new_A, flag1.x), new_b, branch_args);
                     branch1.simplex_metod();
+                    branch_new_instruction.AddChild(branch_new_branch);
                     new_b[this.b.Length] = -Math.Floor(this.simplex_table[flag1.x, 0]) - 1 + this.simplex_table[flag1.x, 0];
+                    branch_new_branch = new TreeNode($"Ветвь {this.column[flag1.x]} >= {Math.Floor(this.simplex_table[flag1.x, 0]) + 1}");
                     Console.WriteLine($"Ветвь {this.column[flag1.x]} >= {Math.Floor(this.simplex_table[flag1.x, 0]) + 1}");
+                    branch_args.branch = branch_new_branch;
                     Branches_and_borders branch2 = new Branches_and_borders(new_c, new_A, new_b, branch_args);
                     branch2.simplex_metod();
+                    branch_new_instruction.AddChild(branch_new_branch);
+                    branch_new.AddChild(branch_new_instruction);
                 }
             }
+            this.branch.AddChild(branch_new);
+        }
+        public void print_Tree()
+        {
+            Console.WriteLine("\n\n");
+            TreePrinter.PrintTree(this.branch);
+            Console.WriteLine("\n\n");
         }
         public void Brute_force()
         {

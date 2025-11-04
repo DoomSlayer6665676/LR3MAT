@@ -6,4 +6,5 @@ double[,] A = { { 1, 1, 1 },
 double[] b = { 7, 8, 6 };
 Branches_and_borders Table = new Branches_and_borders(c, A, b, new Sup());
 Table.simplex_metod();
+Table.print_Tree();
 Table.Brute_force();
